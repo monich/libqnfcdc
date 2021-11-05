@@ -1,0 +1,5 @@
+libqnfcdc
+==========
+
+A library for talking to use nfcd D-Bus interface from a Qt app.
+It's basically a Qt wrapper for libgnfcdc.
