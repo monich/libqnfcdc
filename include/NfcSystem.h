@@ -1,6 +1,6 @@
 /*
+ * Copyright (C) 2019-2024 Slava Monich <slava@monich.com>
  * Copyright (C) 2019-2021 Jolla Ltd.
- * Copyright (C) 2019-2021 Slava Monich <slava@monich.com>
  *
  * You may use this file under the terms of the BSD license as follows:
  *
@@ -8,21 +8,23 @@
  * modification, are permitted provided that the following conditions
  * are met:
  *
- *   1. Redistributions of source code must retain the above copyright
- *      notice, this list of conditions and the following disclaimer.
- *   2. Redistributions in binary form must reproduce the above copyright
- *      notice, this list of conditions and the following disclaimer in
- *      the documentation and/or other materials provided with the
- *      distribution.
- *   3. Neither the names of the copyright holders nor the names of its
- *      contributors may be used to endorse or promote products derived
- *      from this software without specific prior written permission.
+ *  1. Redistributions of source code must retain the above copyright
+ *     notice, this list of conditions and the following disclaimer.
+ *
+ *  2. Redistributions in binary form must reproduce the above copyright
+ *     notice, this list of conditions and the following disclaimer
+ *     in the documentation and/or other materials provided with the
+ *     distribution.
+ *
+ *  3. Neither the names of the copyright holders nor the names of its
+ *     contributors may be used to endorse or promote products derived
+ *     from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
  * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
- * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * HOLDERS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
  * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
  * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -43,7 +45,9 @@
 class QQmlEngine;
 class QJSEngine;
 
-class NfcSystem : public QObject {
+class NfcSystem :
+    public QObject
+{
     Q_OBJECT
     Q_DISABLE_COPY(NfcSystem)
     Q_PROPERTY(bool valid READ valid NOTIFY validChanged)
@@ -51,13 +55,14 @@ class NfcSystem : public QObject {
     Q_PROPERTY(bool enabled READ enabled NOTIFY enabledChanged)
     Q_PROPERTY(int version READ version NOTIFY versionChanged)
     Q_PROPERTY(int mode READ mode NOTIFY modeChanged)
-    Q_ENUMS(DaemonVersions)
+    Q_ENUMS(DaemonVersion)
     Q_ENUMS(Mode)
 
 public:
-    enum DaemonVersions {
+    enum DaemonVersion {
         Version_1_0_26 = 0x0100001a, // Fixed ISO-DEP initialization
-        Version_1_1_0 = 0x01001000   // NFC-DEP (peer-to-peer) support
+        Version_1_1_0 = 0x01001000,  // NFC-DEP (peer-to-peer) support
+        Version_1_2_0 = 0x01002000   // Card Emulation support
     };
 
     enum Mode {
@@ -72,7 +77,7 @@ public:
     ~NfcSystem();
 
     // Callback for qmlRegisterSingletonType<NfcSystem>
-    static QObject* createSingleton(QQmlEngine* aEngine, QJSEngine* aScript);
+    static QObject* createSingleton(QQmlEngine*, QJSEngine*);
 
     bool valid() const;
     bool present() const;

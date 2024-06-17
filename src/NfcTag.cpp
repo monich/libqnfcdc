@@ -1,6 +1,6 @@
 /*
+ * Copyright (C) 2019-2024 Slava Monich <slava@monich.com>
  * Copyright (C) 2019-2021 Jolla Ltd.
- * Copyright (C) 2019-2021 Slava Monich <slava@monich.com>
  *
  * You may use this file under the terms of the BSD license as follows:
  *
@@ -8,21 +8,23 @@
  * modification, are permitted provided that the following conditions
  * are met:
  *
- *   1. Redistributions of source code must retain the above copyright
- *      notice, this list of conditions and the following disclaimer.
- *   2. Redistributions in binary form must reproduce the above copyright
- *      notice, this list of conditions and the following disclaimer in
- *      the documentation and/or other materials provided with the
- *      distribution.
- *   3. Neither the names of the copyright holders nor the names of its
- *      contributors may be used to endorse or promote products derived
- *      from this software without specific prior written permission.
+ *  1. Redistributions of source code must retain the above copyright
+ *     notice, this list of conditions and the following disclaimer.
+ *
+ *  2. Redistributions in binary form must reproduce the above copyright
+ *     notice, this list of conditions and the following disclaimer
+ *     in the documentation and/or other materials provided with the
+ *     distribution.
+ *
+ *  3. Neither the names of the copyright holders nor the names of its
+ *     contributors may be used to endorse or promote products derived
+ *     from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
  * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
- * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * HOLDERS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
  * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
  * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -54,13 +56,13 @@ enum tag_events {
 // NfcTag::Private
 // ==========================================================================
 
-class NfcTag::Private {
+class NfcTag::Private
+{
 public:
-
-    Private(NfcTag* aParent);
+    Private(NfcTag*);
     ~Private();
 
-    void setPath(const char* aPath);
+    void setPath(const char*);
     bool updateType();
     void updateTypeAndEmitSignal();
 
@@ -79,9 +81,10 @@ public:
     Type iType;
 };
 
-NfcTag::Private::Private(NfcTag* aParent) :
+NfcTag::Private::Private(
+    NfcTag* aParent) :
     iParent(aParent),
-    iTag(NULL),
+    iTag(Q_NULLPTR),
     iType(Unknown)
 {
     memset(iTagEventId, 0, sizeof(iTagEventId));
@@ -93,7 +96,9 @@ NfcTag::Private::~Private()
     nfc_tag_client_unref(iTag);
 }
 
-void NfcTag::Private::setPath(const char* aPath)
+void
+NfcTag::Private::setPath(
+    const char* aPath)
 {
     nfc_tag_client_remove_all_handlers(iTag, iTagEventId);
     nfc_tag_client_unref(iTag);
@@ -109,14 +114,16 @@ void NfcTag::Private::setPath(const char* aPath)
             nfc_tag_client_add_property_handler(iTag,
                 NFC_TAG_PROPERTY_INTERFACES, interfacesChanged, this);
     } else {
-        iTag = NULL;
+        iTag = Q_NULLPTR;
     }
     updateType();
 }
 
-bool NfcTag::Private::updateType()
+bool
+NfcTag::Private::updateType()
 {
     Type type = Unknown;
+
     if (iTag) {
         if (gutil_strv_contains(iTag->interfaces,
             NFC_TAG_INTERFACE_ISODEP)) {
@@ -134,35 +141,51 @@ bool NfcTag::Private::updateType()
     }
 }
 
-// Qt calls from glib callbacks better go through QMetaObject::invokeMethod
+// Qt signals should be signalled from the Qt event loop
 // See https://bugreports.qt.io/browse/QTBUG-18434 for details
 
-inline void NfcTag::Private::emitValidChanged()
+inline
+void
+NfcTag::Private::emitValidChanged()
 {
-    QMetaObject::invokeMethod(iParent, "validChanged");
+    QMetaObject::invokeMethod(iParent, "validChanged",
+        Qt::QueuedConnection);
 }
 
-inline void NfcTag::Private::emitPresentChanged()
+inline
+void
+NfcTag::Private::emitPresentChanged()
 {
-    QMetaObject::invokeMethod(iParent, "presentChanged");
+    QMetaObject::invokeMethod(iParent, "presentChanged",
+        Qt::QueuedConnection);
 }
 
-inline void NfcTag::Private::emitTypeChanged()
+inline
+void
+NfcTag::Private::emitTypeChanged()
 {
-    QMetaObject::invokeMethod(iParent, "typeChanged");
+    QMetaObject::invokeMethod(iParent, "typeChanged",
+        Qt::QueuedConnection);
 }
 
-inline void NfcTag::Private::updateTypeAndEmitSignal()
+inline
+void
+NfcTag::Private::updateTypeAndEmitSignal()
 {
     if (updateType()) {
         emitTypeChanged();
     }
 }
 
-void NfcTag::Private::validChanged(NfcTagClient* aTag,
-    NFC_TAG_PROPERTY, void* aPrivate)
+/* static */
+void
+NfcTag::Private::validChanged(
+    NfcTagClient* aTag,
+    NFC_TAG_PROPERTY,
+    void* aPrivate)
 {
     Private* self = (Private*)aPrivate;
+
     if (aTag->valid) {
         self->updateTypeAndEmitSignal();
         self->emitValidChanged();
@@ -172,16 +195,25 @@ void NfcTag::Private::validChanged(NfcTagClient* aTag,
     }
 }
 
-void NfcTag::Private::presentChanged(NfcTagClient*,
-    NFC_TAG_PROPERTY, void* aPrivate)
+/* static */
+void
+NfcTag::Private::presentChanged(
+    NfcTagClient*,
+    NFC_TAG_PROPERTY,
+    void* aPrivate)
 {
     Private* self = (Private*)aPrivate;
+
     self->updateTypeAndEmitSignal();
     self->emitPresentChanged();
 }
 
-void NfcTag::Private::interfacesChanged(NfcTagClient*,
-    NFC_TAG_PROPERTY, void* aPrivate)
+/* static */
+void
+NfcTag::Private::interfacesChanged(
+    NfcTagClient*,
+    NFC_TAG_PROPERTY,
+    void* aPrivate)
 {
     ((Private*)aPrivate)->updateTypeAndEmitSignal();
 }
@@ -190,7 +222,8 @@ void NfcTag::Private::interfacesChanged(NfcTagClient*,
 // NfcTag
 // ==========================================================================
 
-NfcTag::NfcTag(QObject* aParent) :
+NfcTag::NfcTag(
+    QObject* aParent) :
     QObject(aParent),
     iPrivate(new Private(this))
 {
@@ -201,23 +234,26 @@ NfcTag::~NfcTag()
     delete iPrivate;
 }
 
-void NfcTag::setPath(QString aPath)
+void
+NfcTag::setPath(QString aPath)
 {
     const QString currentPath(path());
+
     if (currentPath != aPath) {
         const bool wasValid = valid();
         const bool wasPresent = present();
         const Type prevType = type();
+
         HDEBUG(aPath);
         if (aPath.isEmpty()) {
-            iPrivate->setPath(NULL);
+            iPrivate->setPath(Q_NULLPTR);
         } else {
             QByteArray bytes(aPath.toLatin1());
             iPrivate->setPath(bytes.constData());
         }
-        static bool isValid = valid();
+
         Q_EMIT pathChanged();
-        if (wasValid && !isValid) {
+        if (wasValid && !valid()) {
             // valid has become false
             Q_EMIT validChanged();
         }
@@ -227,29 +263,33 @@ void NfcTag::setPath(QString aPath)
         if (prevType != type()) {
             Q_EMIT typeChanged();
         }
-        if (isValid && !wasValid) {
+        if (valid() && !wasValid) {
             // valid has become true
             Q_EMIT validChanged();
         }
     }
 }
 
-QString NfcTag::path() const
+QString
+NfcTag::path() const
 {
     return iPrivate->iTag ? QString(iPrivate->iTag->path) : QString();
 }
 
-bool NfcTag::valid() const
+bool
+NfcTag::valid() const
 {
     return iPrivate->iTag && iPrivate->iTag->valid;
 }
 
-bool NfcTag::present() const
+bool
+NfcTag::present() const
 {
     return iPrivate->iTag && iPrivate->iTag->present;
 }
 
-NfcTag::Type NfcTag::type() const
+NfcTag::Type
+NfcTag::type() const
 {
     return iPrivate->iType;
 }

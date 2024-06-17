@@ -1,6 +1,6 @@
 /*
+ * Copyright (C) 2021-2024 Slava Monich <slava@monich.com>
  * Copyright (C) 2021 Jolla Ltd.
- * Copyright (C) 2021 Slava Monich <slava@monich.com>
  *
  * You may use this file under the terms of the BSD license as follows:
  *
@@ -8,21 +8,23 @@
  * modification, are permitted provided that the following conditions
  * are met:
  *
- *   1. Redistributions of source code must retain the above copyright
- *      notice, this list of conditions and the following disclaimer.
- *   2. Redistributions in binary form must reproduce the above copyright
- *      notice, this list of conditions and the following disclaimer in
- *      the documentation and/or other materials provided with the
- *      distribution.
- *   3. Neither the names of the copyright holders nor the names of its
- *      contributors may be used to endorse or promote products derived
- *      from this software without specific prior written permission.
+ *  1. Redistributions of source code must retain the above copyright
+ *     notice, this list of conditions and the following disclaimer.
+ *
+ *  2. Redistributions in binary form must reproduce the above copyright
+ *     notice, this list of conditions and the following disclaimer
+ *     in the documentation and/or other materials provided with the
+ *     distribution.
+ *
+ *  3. Neither the names of the copyright holders nor the names of its
+ *     contributors may be used to endorse or promote products derived
+ *     from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
  * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
- * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * HOLDERS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
  * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
  * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -45,17 +47,17 @@
 // NfcPeer::Private
 // ==========================================================================
 
-class NfcPeer::Private {
+class NfcPeer::Private
+{
 public:
-
     Private(NfcPeer* aParent);
     ~Private();
 
-    void setPath(const char* aPath);
+    void setPath(const char*);
+    void emitPropertySignal(NFC_PEER_PROPERTY);
 
     static const char* SIGNAL_NAME[];
-    static void propertyChanged(NfcPeerClient* aPeer,
-        NFC_PEER_PROPERTY aProperty, void* aTarget);
+    static void propertyChanged(NfcPeerClient*, NFC_PEER_PROPERTY, void*);
 
 public:
     NfcPeer* iParent;
@@ -64,14 +66,15 @@ public:
 };
 
 const char* NfcPeer::Private::SIGNAL_NAME[] = {
-    NULL,               // NFC_PEER_PROPERTY_ANY
+    Q_NULLPTR,          // NFC_PEER_PROPERTY_ANY
     "validChanged",     // NFC_PEER_PROPERTY_VALID
     "presentChanged",   // NFC_PEER_PROPERTY_PRESENT
     "wksChanged",       // NFC_PEER_PROPERTY_WKS
     // Remember to update iPeerEventId count when adding new handlers!
 };
 
-NfcPeer::Private::Private(NfcPeer* aParent) :
+NfcPeer::Private::Private(
+    NfcPeer* aParent) :
     iParent(aParent),
     iPeer(Q_NULLPTR)
 {
@@ -85,12 +88,28 @@ NfcPeer::Private::~Private()
     nfc_peer_client_unref(iPeer);
 }
 
-void NfcPeer::Private::setPath(const char* aPath)
+inline
+void
+NfcPeer::Private::emitPropertySignal(
+    NFC_PEER_PROPERTY aProperty)
 {
+    // Qt signals should be signalled from the Qt event loop
+    // See https://bugreports.qt.io/browse/QTBUG-18434 for details
+    QMetaObject::invokeMethod(iParent, SIGNAL_NAME[aProperty],
+        Qt::QueuedConnection);
+}
+
+void
+NfcPeer::Private::setPath(
+    const char* aPath)
+{
+    bool changed[NFC_PEER_PROPERTY_COUNT];
+    NFC_PEER_PROPERTY p;
     gboolean valid = FALSE;
     gboolean present = FALSE;
     guint wks = 0;
 
+    memset(changed, 0, sizeof(changed));
     if (iPeer) {
         valid = iPeer->valid;
         present = iPeer->present;
@@ -101,58 +120,54 @@ void NfcPeer::Private::setPath(const char* aPath)
     }
 
     if (aPath) {
-        int i, k;
-        bool changed[NFC_PEER_PROPERTY_COUNT];
+        int k;
 
         iPeer = nfc_peer_client_new(aPath);
-        for (i = 1, k = 0; i < NFC_PEER_PROPERTY_COUNT; i++) {
-            if (SIGNAL_NAME[i]) {
+        for (p = NFC_PEER_PROPERTY_VALID, k = 0;
+             p < NFC_PEER_PROPERTY_COUNT;
+             p = NFC_PEER_PROPERTY(p+1)) {
+            if (SIGNAL_NAME[p]) {
                 iPeerEventId[k++] =
-                    nfc_peer_client_add_property_handler(iPeer,
-                        (NFC_PEER_PROPERTY)i, propertyChanged, iParent);
+                    nfc_peer_client_add_property_handler(iPeer, p,
+                        propertyChanged, this);
             }
         }
         HASSERT(k == G_N_ELEMENTS(iPeerEventId));
         // Signal the changes
-        memset(changed, 0, sizeof(changed));
         changed[NFC_PEER_PROPERTY_VALID] = (valid != iPeer->valid);
         changed[NFC_PEER_PROPERTY_PRESENT] = (present != iPeer->present);
         changed[NFC_PEER_PROPERTY_WKS] = (wks != iPeer->wks);
-        for (i = 1; i < NFC_PEER_PROPERTY_COUNT; i++) {
-            if (changed[i]) {
-                QMetaObject::invokeMethod(iParent, SIGNAL_NAME[i]);
-            }
-        }
     } else {
-        if (valid) {
-            QMetaObject::invokeMethod(iParent,
-                SIGNAL_NAME[NFC_PEER_PROPERTY_VALID]);
-        }
-        if (present) {
-            QMetaObject::invokeMethod(iParent,
-                SIGNAL_NAME[NFC_PEER_PROPERTY_PRESENT]);
-        }
-        if (wks) {
-            QMetaObject::invokeMethod(iParent,
-                SIGNAL_NAME[NFC_PEER_PROPERTY_WKS]);
+        changed[NFC_PEER_PROPERTY_VALID] = (valid != FALSE);
+        changed[NFC_PEER_PROPERTY_PRESENT] = (present != FALSE);
+        changed[NFC_PEER_PROPERTY_WKS] = (wks != 0);
+    }
+
+    for (p = NFC_PEER_PROPERTY_VALID;
+         p < NFC_PEER_PROPERTY_COUNT;
+         p = NFC_PEER_PROPERTY(p+1)) {
+        if (changed[p]) {
+            emitPropertySignal(p);
         }
     }
 }
 
-// Qt calls from glib callbacks better go through QMetaObject::invokeMethod
-// See https://bugreports.qt.io/browse/QTBUG-18434 for details
-
-void NfcPeer::Private::propertyChanged(NfcPeerClient*,
-    NFC_PEER_PROPERTY aProperty, void* aTarget)
+/* static */
+void
+NfcPeer::Private::propertyChanged(
+    NfcPeerClient*,
+    NFC_PEER_PROPERTY aProperty,
+    void* aPrivate)
 {
-    QMetaObject::invokeMethod((QObject*)aTarget, SIGNAL_NAME[aProperty]);
+    ((Private*) aPrivate)->emitPropertySignal(aProperty);
 }
 
 // ==========================================================================
 // NfcPeer
 // ==========================================================================
 
-NfcPeer::NfcPeer(QObject* aParent) :
+NfcPeer::NfcPeer(
+    QObject* aParent) :
     QObject(aParent),
     iPrivate(new Private(this))
 {
@@ -163,13 +178,16 @@ NfcPeer::~NfcPeer()
     delete iPrivate;
 }
 
-void NfcPeer::setPath(QString aPath)
+void
+NfcPeer::setPath(
+    QString aPath)
 {
     const QString currentPath(path());
+
     if (currentPath != aPath) {
         HDEBUG(aPath);
         if (aPath.isEmpty()) {
-            iPrivate->setPath(NULL);
+            iPrivate->setPath(Q_NULLPTR);
         } else {
             QByteArray bytes(aPath.toLatin1());
             iPrivate->setPath(bytes.constData());
@@ -178,22 +196,26 @@ void NfcPeer::setPath(QString aPath)
     }
 }
 
-QString NfcPeer::path() const
+QString
+NfcPeer::path() const
 {
     return iPrivate->iPeer ? QString(iPrivate->iPeer->path) : QString();
 }
 
-bool NfcPeer::valid() const
+bool
+NfcPeer::valid() const
 {
     return iPrivate->iPeer && iPrivate->iPeer->valid;
 }
 
-bool NfcPeer::present() const
+bool
+NfcPeer::present() const
 {
     return iPrivate->iPeer && iPrivate->iPeer->present;
 }
 
-uint NfcPeer::wks() const
+uint
+NfcPeer::wks() const
 {
     return iPrivate->iPeer ? iPrivate->iPeer->wks : 0;
 }

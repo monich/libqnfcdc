@@ -1,6 +1,6 @@
 /*
+ * Copyright (C) 2019-2024 Slava Monich <slava@monich.com>
  * Copyright (C) 2019-2021 Jolla Ltd.
- * Copyright (C) 2019-2021 Slava Monich <slava@monich.com>
  *
  * You may use this file under the terms of the BSD license as follows:
  *
@@ -8,21 +8,23 @@
  * modification, are permitted provided that the following conditions
  * are met:
  *
- *   1. Redistributions of source code must retain the above copyright
- *      notice, this list of conditions and the following disclaimer.
- *   2. Redistributions in binary form must reproduce the above copyright
- *      notice, this list of conditions and the following disclaimer in
- *      the documentation and/or other materials provided with the
- *      distribution.
- *   3. Neither the names of the copyright holders nor the names of its
- *      contributors may be used to endorse or promote products derived
- *      from this software without specific prior written permission.
+ *  1. Redistributions of source code must retain the above copyright
+ *     notice, this list of conditions and the following disclaimer.
+ *
+ *  2. Redistributions in binary form must reproduce the above copyright
+ *     notice, this list of conditions and the following disclaimer
+ *     in the documentation and/or other materials provided with the
+ *     distribution.
+ *
+ *  3. Neither the names of the copyright holders nor the names of its
+ *     contributors may be used to endorse or promote products derived
+ *     from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
  * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
- * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * HOLDERS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
  * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
  * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -45,15 +47,14 @@
 // NfcAdapter::Private
 // ==========================================================================
 
-class NfcAdapter::Private {
+class NfcAdapter::Private
+{
 public:
-
     Private(NfcAdapter* aParent);
     ~Private();
 
     static const char* SIGNAL_NAME[];
-    static void propertyChanged(NfcDefaultAdapter* aAdapter,
-        NFC_DEFAULT_ADAPTER_PROPERTY aProperty, void* aTarget);
+    static void propertyChanged(NfcDefaultAdapter*, NFC_DEFAULT_ADAPTER_PROPERTY, void*);
 
 public:
     NfcDefaultAdapter* iAdapter;
@@ -61,7 +62,7 @@ public:
 };
 
 const char* NfcAdapter::Private::SIGNAL_NAME[] = {
-    NULL,                     // NFC_DEFAULT_ADAPTER_PROPERTY_ANY
+    Q_NULLPTR,                // NFC_DEFAULT_ADAPTER_PROPERTY_ANY
     "presentChanged",         // NFC_DEFAULT_ADAPTER_PROPERTY_ADAPTER
     "enabledChanged",         // NFC_DEFAULT_ADAPTER_PROPERTY_ENABLED
     "poweredChanged",         // NFC_DEFAULT_ADAPTER_PROPERTY_POWERED
@@ -74,7 +75,8 @@ const char* NfcAdapter::Private::SIGNAL_NAME[] = {
     // Remember to update iAdapterEventId count when adding new handlers!
 };
 
-NfcAdapter::Private::Private(NfcAdapter* aParent) :
+NfcAdapter::Private::Private(
+    NfcAdapter* aParent) :
     iAdapter(nfc_default_adapter_new())
 {
     memset(iAdapterEventId, 0, sizeof(iAdapterEventId));
@@ -97,20 +99,25 @@ NfcAdapter::Private::~Private()
     nfc_default_adapter_unref(iAdapter);
 }
 
-// Qt calls from glib callbacks better go through QMetaObject::invokeMethod
-// See https://bugreports.qt.io/browse/QTBUG-18434 for details
-
-void NfcAdapter::Private::propertyChanged(NfcDefaultAdapter*,
-    NFC_DEFAULT_ADAPTER_PROPERTY aProperty, void* aTarget)
+/* static */
+void
+NfcAdapter::Private::propertyChanged(
+    NfcDefaultAdapter*,
+    NFC_DEFAULT_ADAPTER_PROPERTY aProperty,
+    void* aTarget)
 {
-    QMetaObject::invokeMethod((QObject*)aTarget, SIGNAL_NAME[aProperty]);
+    // Qt signals should be signalled from the Qt event loop
+    // See https://bugreports.qt.io/browse/QTBUG-18434 for details
+    QMetaObject::invokeMethod((QObject*)aTarget, SIGNAL_NAME[aProperty],
+        Qt::QueuedConnection);
 }
 
 // ==========================================================================
 // NfcAdapter
 // ==========================================================================
 
-NfcAdapter::NfcAdapter(QObject* aParent) :
+NfcAdapter::NfcAdapter(
+    QObject* aParent) :
     QObject(aParent),
     iPrivate(new Private(this))
 {
@@ -121,54 +128,68 @@ NfcAdapter::~NfcAdapter()
     delete iPrivate;
 }
 
-QObject* NfcAdapter::createSingleton(QQmlEngine* aEngine, QJSEngine* aScript)
+/* static */
+QObject*
+NfcAdapter::createSingleton(
+    QQmlEngine*,
+    QJSEngine*)
 {
+    // Callback for qmlRegisterSingletonType<NfcAdapter>
     return new NfcAdapter;
 }
 
-bool NfcAdapter::valid() const
+bool
+NfcAdapter::valid() const
 {
     return iPrivate->iAdapter->valid;
 }
 
-bool NfcAdapter::present() const
+bool
+NfcAdapter::present() const
 {
-    return iPrivate->iAdapter->adapter != NULL;
+    return iPrivate->iAdapter->adapter != Q_NULLPTR;
 }
 
-bool NfcAdapter::enabled() const
+bool
+NfcAdapter::enabled() const
 {
     return iPrivate->iAdapter->enabled;
 }
 
-bool NfcAdapter::powered() const
+bool
+NfcAdapter::powered() const
 {
     return iPrivate->iAdapter->powered;
 }
 
-bool NfcAdapter::targetPresent() const
+bool
+NfcAdapter::targetPresent() const
 {
     return iPrivate->iAdapter->target_present;
 }
 
-int NfcAdapter::supportedModes() const
+int
+NfcAdapter::supportedModes() const
 {
     return iPrivate->iAdapter->supported_modes;
 }
 
-int NfcAdapter::mode() const
+int
+NfcAdapter::mode() const
 {
     return iPrivate->iAdapter->mode;
 }
 
-QString NfcAdapter::tagPath() const
+QString
+NfcAdapter::tagPath() const
 {
     const char* tag = iPrivate->iAdapter->tags[0];
-    return tag ? QString(tag) : QString();
+    return (tag && tag[0]) ? QString(tag) : QString();
 }
 
-QString NfcAdapter::peerPath() const
+QString
+NfcAdapter::peerPath() const
 {
     const char* peer = iPrivate->iAdapter->peers[0];
-    return peer ? QString(peer) : QString();
+    return (peer && peer[0]) ? QString(peer) : QString();
 }

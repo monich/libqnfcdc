@@ -1,6 +1,6 @@
 /*
+ * Copyright (C) 2019-2024 Slava Monich <slava@monich.com>
  * Copyright (C) 2019-2021 Jolla Ltd.
- * Copyright (C) 2019-2021 Slava Monich <slava@monich.com>
  *
  * You may use this file under the terms of the BSD license as follows:
  *
@@ -8,21 +8,23 @@
  * modification, are permitted provided that the following conditions
  * are met:
  *
- *   1. Redistributions of source code must retain the above copyright
- *      notice, this list of conditions and the following disclaimer.
- *   2. Redistributions in binary form must reproduce the above copyright
- *      notice, this list of conditions and the following disclaimer in
- *      the documentation and/or other materials provided with the
- *      distribution.
- *   3. Neither the names of the copyright holders nor the names of its
- *      contributors may be used to endorse or promote products derived
- *      from this software without specific prior written permission.
+ *  1. Redistributions of source code must retain the above copyright
+ *     notice, this list of conditions and the following disclaimer.
+ *
+ *  2. Redistributions in binary form must reproduce the above copyright
+ *     notice, this list of conditions and the following disclaimer
+ *     in the documentation and/or other materials provided with the
+ *     distribution.
+ *
+ *  3. Neither the names of the copyright holders nor the names of its
+ *     contributors may be used to endorse or promote products derived
+ *     from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
  * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
- * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * HOLDERS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
  * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
  * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -54,15 +56,14 @@ Q_STATIC_ASSERT((int)NfcSystem::CardEmulation == (int)NFC_MODE_CARD_EMILATION);
 // NfcSystem::Private
 // ==========================================================================
 
-class NfcSystem::Private {
+class NfcSystem::Private
+{
 public:
-
-    Private(NfcSystem* aParent);
+    Private(NfcSystem*);
     ~Private();
 
     static const char* SIGNAL_NAME[];
-    static void propertyChanged(NfcDaemonClient* aDaemon,
-        NFC_DAEMON_PROPERTY aProperty, void* aTarget);
+    static void propertyChanged(NfcDaemonClient*, NFC_DAEMON_PROPERTY, void*);
 
 public:
     NfcDaemonClient* iDaemon;
@@ -70,18 +71,19 @@ public:
 };
 
 const char* NfcSystem::Private::SIGNAL_NAME[] = {
-    NULL,               // NFC_DAEMON_PROPERTY_ANY
+    Q_NULLPTR,          // NFC_DAEMON_PROPERTY_ANY
     "validChanged",     // NFC_DAEMON_PROPERTY_VALID
     "presentChanged",   // NFC_DAEMON_PROPERTY_PRESENT
-    NULL,               // NFC_DAEMON_PROPERTY_ERROR
+    Q_NULLPTR,          // NFC_DAEMON_PROPERTY_ERROR
     "enabledChanged",   // NFC_DAEMON_PROPERTY_ENABLED
-    NULL,               // NFC_DAEMON_PROPERTY_ADAPTERS
+    Q_NULLPTR,          // NFC_DAEMON_PROPERTY_ADAPTERS
     "versionChanged",   // NFC_DAEMON_PROPERTY_VERSION
     "modeChanged"       // NFC_DAEMON_PROPERTY_MODE
     // Remember to update iDaemonEventId count when adding new handlers!
 };
 
-NfcSystem::Private::Private(NfcSystem* aParent) :
+NfcSystem::Private::Private(
+    NfcSystem* aParent) :
     iDaemon(nfc_daemon_client_new())
 {
     int k = 0;
@@ -103,20 +105,25 @@ NfcSystem::Private::~Private()
     nfc_daemon_client_unref(iDaemon);
 }
 
-// Qt calls from glib callbacks better go through QMetaObject::invokeMethod
-// See https://bugreports.qt.io/browse/QTBUG-18434 for details
-
-void NfcSystem::Private::propertyChanged(NfcDaemonClient*,
-    NFC_DAEMON_PROPERTY aProperty, void* aTarget)
+/* static */
+void
+NfcSystem::Private::propertyChanged(
+    NfcDaemonClient*,
+    NFC_DAEMON_PROPERTY aProperty,
+    void* aTarget)
 {
-    QMetaObject::invokeMethod((QObject*)aTarget, SIGNAL_NAME[aProperty]);
+    // Qt signals should be signalled from the Qt event loop
+    // See https://bugreports.qt.io/browse/QTBUG-18434 for details
+    QMetaObject::invokeMethod((QObject*)aTarget, SIGNAL_NAME[aProperty],
+        Qt::QueuedConnection);
 }
 
 // ==========================================================================
 // NfcSystem
 // ==========================================================================
 
-NfcSystem::NfcSystem(QObject* aParent) :
+NfcSystem::NfcSystem(
+    QObject* aParent) :
     QObject(aParent),
     iPrivate(new Private(this))
 {
@@ -127,32 +134,42 @@ NfcSystem::~NfcSystem()
     delete iPrivate;
 }
 
-QObject* NfcSystem::createSingleton(QQmlEngine* aEngine, QJSEngine* aScript)
+/* static */
+QObject*
+NfcSystem::createSingleton(
+    QQmlEngine*,
+    QJSEngine*)
 {
+    // Callback for qmlRegisterSingletonType<NfcSystem>
     return new NfcSystem;
 }
 
-bool NfcSystem::valid() const
+bool
+NfcSystem::valid() const
 {
     return iPrivate->iDaemon->valid;
 }
 
-bool NfcSystem::present() const
+bool
+NfcSystem::present() const
 {
     return iPrivate->iDaemon->present;
 }
 
-bool NfcSystem::enabled() const
+bool
+NfcSystem::enabled() const
 {
     return iPrivate->iDaemon->enabled;
 }
 
-int NfcSystem::version() const
+int
+NfcSystem::version() const
 {
     return iPrivate->iDaemon->version;
 }
 
-int NfcSystem::mode() const
+int
+NfcSystem::mode() const
 {
     return iPrivate->iDaemon->mode;
 }
