@@ -1,6 +1,6 @@
 /*
+ * Copyright (C) 2021-2024 Slava Monich <slava@monich.com>
  * Copyright (C) 2021 Jolla Ltd.
- * Copyright (C) 2021 Slava Monich <slava@monich.com>
  *
  * You may use this file under the terms of the BSD license as follows:
  *
@@ -8,21 +8,23 @@
  * modification, are permitted provided that the following conditions
  * are met:
  *
- *   1. Redistributions of source code must retain the above copyright
- *      notice, this list of conditions and the following disclaimer.
- *   2. Redistributions in binary form must reproduce the above copyright
- *      notice, this list of conditions and the following disclaimer in
- *      the documentation and/or other materials provided with the
- *      distribution.
- *   3. Neither the names of the copyright holders nor the names of its
- *      contributors may be used to endorse or promote products derived
- *      from this software without specific prior written permission.
+ *  1. Redistributions of source code must retain the above copyright
+ *     notice, this list of conditions and the following disclaimer.
+ *
+ *  2. Redistributions in binary form must reproduce the above copyright
+ *     notice, this list of conditions and the following disclaimer
+ *     in the documentation and/or other materials provided with the
+ *     distribution.
+ *
+ *  3. Neither the names of the copyright holders nor the names of its
+ *     contributors may be used to endorse or promote products derived
+ *     from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
  * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
- * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * HOLDERS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
  * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
  * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -45,7 +47,8 @@
 // NfcMode::Private
 // ==========================================================================
 
-class NfcMode::Private {
+class NfcMode::Private
+{
 public:
     Private();
     ~Private();
@@ -76,12 +79,15 @@ NfcMode::Private::~Private()
     nfc_daemon_client_unref(iDaemon);
 }
 
-inline bool NfcMode::Private::needRequest() const
+inline
+bool
+NfcMode::Private::needRequest() const
 {
     return iActive && (iEnableModes || iDisableModes);
 }
 
-void NfcMode::Private::updateRequest()
+void
+NfcMode::Private::updateRequest()
 {
     if (needRequest()) {
         nfc_mode_request_free(iRequest);
@@ -97,7 +103,8 @@ void NfcMode::Private::updateRequest()
 // NfcModeRequest
 // ==========================================================================
 
-NfcMode::NfcMode(QObject* aParent) :
+NfcMode::NfcMode(
+    QObject* aParent) :
     QObject(aParent),
     iPrivate(new Private)
 {
@@ -108,12 +115,15 @@ NfcMode::~NfcMode()
     delete iPrivate;
 }
 
-bool NfcMode::active() const
+bool
+NfcMode::active() const
 {
     return iPrivate->iActive;
 }
 
-void NfcMode::setActive(bool aActive)
+void
+NfcMode::setActive(
+    bool aActive)
 {
     if (iPrivate->iActive != aActive) {
         iPrivate->iActive = aActive;
@@ -122,15 +132,19 @@ void NfcMode::setActive(bool aActive)
     }
 }
 
-NfcSystem::Mode NfcMode::enableModes() const
+NfcSystem::Mode
+NfcMode::enableModes() const
 {
     return iPrivate->iEnableModes;
 }
 
-void NfcMode::setEnableModes(int aModes)
+void
+NfcMode::setEnableModes(
+    int aModes)
 {
     if (iPrivate->iEnableModes != (NfcSystem::Mode)aModes) {
         const bool didNeedRequest = iPrivate->needRequest();
+
         iPrivate->iEnableModes = (NfcSystem::Mode)aModes;
         if (didNeedRequest != iPrivate->needRequest()) {
             iPrivate->updateRequest();
@@ -139,15 +153,19 @@ void NfcMode::setEnableModes(int aModes)
     }
 }
 
-NfcSystem::Mode NfcMode::disableModes() const
+NfcSystem::Mode
+NfcMode::disableModes() const
 {
     return iPrivate->iDisableModes;
 }
 
-void NfcMode::setDisableModes(int aModes)
+void
+NfcMode::setDisableModes(
+    int aModes)
 {
     if (iPrivate->iDisableModes != (NfcSystem::Mode)aModes) {
         const bool didNeedRequest = iPrivate->needRequest();
+
         iPrivate->iDisableModes = (NfcSystem::Mode)aModes;
         if (didNeedRequest != iPrivate->needRequest()) {
             iPrivate->updateRequest();
