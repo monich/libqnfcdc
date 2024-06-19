@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Slava Monich <slava@monich.com>
- * Copyright (C) 2019-2021 Jolla Ltd.
+ * Copyright (C) 2024 Slava Monich <slava@monich.com>
  *
  * You may use this file under the terms of the BSD license as follows:
  *
@@ -37,75 +36,41 @@
  * any official policies, either expressed or implied.
  */
 
-#ifndef QNFCDC_SYSTEM_H
-#define QNFCDC_SYSTEM_H
+#ifndef QNFCDC_TECH_H
+#define QNFCDC_TECH_H
 
-#include <QObject>
+#include "NfcSystem.h"
 
-class QQmlEngine;
-class QJSEngine;
-
-class NfcSystem :
+class NfcTech :
     public QObject
 {
     Q_OBJECT
-    Q_DISABLE_COPY(NfcSystem)
-    Q_PROPERTY(bool valid READ valid NOTIFY validChanged)
-    Q_PROPERTY(bool present READ present NOTIFY presentChanged)
-    Q_PROPERTY(bool enabled READ enabled NOTIFY enabledChanged)
-    Q_PROPERTY(int version READ version NOTIFY versionChanged)
-    Q_PROPERTY(int mode READ mode NOTIFY modeChanged)
-    Q_PROPERTY(int techs READ techs NOTIFY techsChanged)
-    Q_ENUMS(DaemonVersion)
-    Q_ENUMS(Mode)
-    Q_ENUMS(Tech)
+    Q_DISABLE_COPY(NfcTech)
+    Q_PROPERTY(bool active READ active WRITE setActive NOTIFY activeChanged)
+    Q_PROPERTY(int allowTechs READ allowTechs WRITE setAllowTechs NOTIFY allowTechsChanged)
+    Q_PROPERTY(int disallowTechs READ disallowTechs WRITE setDisallowTechs NOTIFY disallowTechsChanged)
 
 public:
-    enum DaemonVersion {
-        Version_1_0_26 = 0x0100001a, // Fixed ISO-DEP initialization
-        Version_1_1_0 = 0x01001000,  // NFC-DEP (peer-to-peer) support
-        Version_1_2_0 = 0x01002000   // Card Emulation support
-    };
+    NfcTech(QObject* aParent = Q_NULLPTR);
+    ~NfcTech();
 
-    enum Mode {
-        None          = 0x00,
-        P2PInitiator  = 0x01,
-        ReaderWriter  = 0x02,
-        P2PTarget     = 0x04,
-        CardEmulation = 0x08
-    };
+    bool active() const;
+    void setActive(bool);
 
-    enum Tech {
-        NoTech = 0,
-        NfcA = 0x01,
-        NfcB = 0x02,
-        NfcF = 0x04
-    };
+    NfcSystem::Tech allowTechs() const;
+    void setAllowTechs(int);
 
-    NfcSystem(QObject* aParent = Q_NULLPTR);
-    ~NfcSystem();
-
-    // Callback for qmlRegisterSingletonType<NfcSystem>
-    static QObject* createSingleton(QQmlEngine*, QJSEngine*);
-
-    bool valid() const;
-    bool present() const;
-    bool enabled() const;
-    int version() const;
-    int mode() const;
-    int techs() const;
+    NfcSystem::Tech disallowTechs() const;
+    void setDisallowTechs(int);
 
 Q_SIGNALS:
-    void validChanged();
-    void presentChanged();
-    void enabledChanged();
-    void versionChanged();
-    void modeChanged();
-    void techsChanged();
+    void activeChanged();
+    void allowTechsChanged();
+    void disallowTechsChanged();
 
 private:
     class Private;
     Private* iPrivate;
 };
 
-#endif // QNFCDC_SYSTEM_H
+#endif // QNFCDC_TECH_H

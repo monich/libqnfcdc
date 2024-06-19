@@ -32,14 +32,16 @@ SOURCES += \
     src/NfcMode.cpp \
     src/NfcPeer.cpp \
     src/NfcSystem.cpp \
-    src/NfcTag.cpp
+    src/NfcTag.cpp \
+    src/NfcTech.cpp
 
 PUBLIC_HEADERS += \
     include/NfcAdapter.h \
     include/NfcMode.h \
     include/NfcPeer.h \
     include/NfcSystem.h \
-    include/NfcTag.h
+    include/NfcTag.h \
+    include/NfcTech.h
 
 HEADERS += \
     src/Debug.h \

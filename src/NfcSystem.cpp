@@ -67,7 +67,7 @@ public:
 
 public:
     NfcDaemonClient* iDaemon;
-    gulong iDaemonEventId[5]; // Must match number of non-NULLs below:
+    gulong iDaemonEventId[6]; // Must not be less than the number of non-NULLs:
 };
 
 const char* NfcSystem::Private::SIGNAL_NAME[] = {
@@ -78,7 +78,10 @@ const char* NfcSystem::Private::SIGNAL_NAME[] = {
     "enabledChanged",   // NFC_DAEMON_PROPERTY_ENABLED
     Q_NULLPTR,          // NFC_DAEMON_PROPERTY_ADAPTERS
     "versionChanged",   // NFC_DAEMON_PROPERTY_VERSION
-    "modeChanged"       // NFC_DAEMON_PROPERTY_MODE
+    "modeChanged",      // NFC_DAEMON_PROPERTY_MODE
+#ifdef NFCDC_VERSION_1_1_0
+    "techsChanged"       // NFC_DAEMON_PROPERTY_MODE
+#endif
     // Remember to update iDaemonEventId count when adding new handlers!
 };
 
@@ -86,17 +89,20 @@ NfcSystem::Private::Private(
     NfcSystem* aParent) :
     iDaemon(nfc_daemon_client_new())
 {
-    int k = 0;
-    for (int i = 0; i < NFC_DAEMON_PROPERTY_COUNT; i++) {
+    Q_STATIC_ASSERT(G_N_ELEMENTS(NfcSystem::Private::SIGNAL_NAME) ==
+        NFC_DAEMON_PROPERTY_COUNT);
+    uint k = 0;
+    for (uint i = 0; i < NFC_DAEMON_PROPERTY_COUNT; i++) {
         if (SIGNAL_NAME[i]) {
             iDaemonEventId[k++] =
                 nfc_daemon_client_add_property_handler(iDaemon,
                     (NFC_DAEMON_PROPERTY)i, propertyChanged, aParent);
         }
     }
-    HASSERT(k == G_N_ELEMENTS(iDaemonEventId));
-    Q_STATIC_ASSERT(G_N_ELEMENTS(NfcSystem::Private::SIGNAL_NAME) ==
-        NFC_DAEMON_PROPERTY_COUNT);
+    HASSERT(k <= G_N_ELEMENTS(iDaemonEventId));
+    while (k < G_N_ELEMENTS(iDaemonEventId)) {
+        iDaemonEventId[k++] = 0;
+    }
 }
 
 NfcSystem::Private::~Private()
@@ -172,4 +178,15 @@ int
 NfcSystem::mode() const
 {
     return iPrivate->iDaemon->mode;
+}
+
+int
+NfcSystem::techs() const
+{
+#ifdef NFCDC_VERSION_1_1_0
+    return iPrivate->iDaemon->techs;
+#else
+#pragma message("Please use libgnfcdc 1.1.0 or newer")
+    return 0;
+#endif
 }
