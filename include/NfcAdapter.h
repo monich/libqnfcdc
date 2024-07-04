@@ -56,9 +56,11 @@ class NfcAdapter :
     Q_PROPERTY(bool powered READ powered NOTIFY poweredChanged)
     Q_PROPERTY(bool targetPresent READ targetPresent NOTIFY targetPresentChanged)
     Q_PROPERTY(int supportedModes READ supportedModes NOTIFY supportedModesChanged)
+    Q_PROPERTY(int supportedTechs READ supportedTechs NOTIFY supportedTechsChanged)
     Q_PROPERTY(int mode READ mode NOTIFY modeChanged)
     Q_PROPERTY(QString tagPath READ tagPath NOTIFY tagPathChanged)
     Q_PROPERTY(QString peerPath READ peerPath NOTIFY peerPathChanged)
+    Q_PROPERTY(QString hostPath READ hostPath NOTIFY hostPathChanged)
 
 public:
     NfcAdapter(QObject* aParent = Q_NULLPTR);
@@ -73,9 +75,11 @@ public:
     bool powered() const;
     bool targetPresent() const;
     int supportedModes() const;
+    int supportedTechs() const;
     int mode() const;
     QString tagPath() const;
     QString peerPath() const;
+    QString hostPath() const;
 
 Q_SIGNALS:
     void validChanged();
@@ -84,9 +88,11 @@ Q_SIGNALS:
     void poweredChanged();
     void targetPresentChanged();
     void supportedModesChanged();
+    void supportedTechsChanged();
     void modeChanged();
     void tagPathChanged();
     void peerPathChanged();
+    void hostPathChanged();
 
 private:
     class Private;

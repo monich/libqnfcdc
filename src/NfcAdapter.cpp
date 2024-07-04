@@ -58,7 +58,7 @@ public:
 
 public:
     NfcDefaultAdapter* iAdapter;
-    gulong iAdapterEventId[9];  // Must match number of non-NULLs below:
+    gulong iAdapterEventId[11];  // Must not be less than the number of non-NULLs:
 };
 
 const char* NfcAdapter::Private::SIGNAL_NAME[] = {
@@ -72,6 +72,10 @@ const char* NfcAdapter::Private::SIGNAL_NAME[] = {
     "tagPathChanged",         // NFC_DEFAULT_ADAPTER_PROPERTY_TAGS
     "validChanged",           // NFC_DEFAULT_ADAPTER_PROPERTY_VALID
     "peerPathChanged",        // NFC_DEFAULT_ADAPTER_PROPERTY_PEERS
+#ifdef NFCDC_VERSION_1_1_0
+    "hostPathChanged",        // NFC_DEFAULT_ADAPTER_PROPERTY_HOSTS
+    "supportedTechsChanged",  // NFC_DEFAULT_ADAPTER_PROPERTY_SUPPORTED_TECHS
+#endif
     // Remember to update iAdapterEventId count when adding new handlers!
 };
 
@@ -79,8 +83,9 @@ NfcAdapter::Private::Private(
     NfcAdapter* aParent) :
     iAdapter(nfc_default_adapter_new())
 {
-    memset(iAdapterEventId, 0, sizeof(iAdapterEventId));
-    int k = 0;
+    Q_STATIC_ASSERT(G_N_ELEMENTS(SIGNAL_NAME) ==
+        NFC_DEFAULT_ADAPTER_PROPERTY_COUNT);
+    uint k = 0;
     for (int i = 0; i < NFC_DEFAULT_ADAPTER_PROPERTY_COUNT; i++) {
         if (SIGNAL_NAME[i]) {
             iAdapterEventId[k++] =
@@ -89,8 +94,10 @@ NfcAdapter::Private::Private(
                     aParent);
         }
     }
-    HASSERT(k == G_N_ELEMENTS(iAdapterEventId));
-    Q_STATIC_ASSERT(G_N_ELEMENTS(SIGNAL_NAME) == NFC_DEFAULT_ADAPTER_PROPERTY_COUNT);
+    HASSERT(k <= G_N_ELEMENTS(iAdapterEventId));
+    while (k < G_N_ELEMENTS(iAdapterEventId)) {
+        iAdapterEventId[k++] = 0;
+    }
 }
 
 NfcAdapter::Private::~Private()
@@ -192,4 +199,27 @@ NfcAdapter::peerPath() const
 {
     const char* peer = iPrivate->iAdapter->peers[0];
     return (peer && peer[0]) ? QString(peer) : QString();
+}
+
+QString
+NfcAdapter::hostPath() const
+{
+#ifdef NFCDC_VERSION_1_1_0
+    const char* host = iPrivate->iAdapter->hosts[0];
+    return (host && host[0]) ? QString(host) : QString();
+#else
+#pragma message("Please use libgnfcdc 1.1.0 or newer")
+    return QString();
+#endif
+}
+
+int
+NfcAdapter::supportedTechs() const
+{
+#ifdef NFCDC_VERSION_1_1_0
+    return iPrivate->iAdapter->supported_techs;
+#else
+#pragma message("Please use libgnfcdc 1.1.0 or newer")
+    return 0;
+#endif
 }
