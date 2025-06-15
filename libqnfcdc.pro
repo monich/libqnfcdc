@@ -30,6 +30,7 @@ OTHER_FILES += \
 SOURCES += \
     src/NfcAdapter.cpp \
     src/NfcMode.cpp \
+    src/NfcParam.cpp \
     src/NfcPeer.cpp \
     src/NfcSystem.cpp \
     src/NfcTag.cpp \
@@ -38,6 +39,7 @@ SOURCES += \
 PUBLIC_HEADERS += \
     include/NfcAdapter.h \
     include/NfcMode.h \
+    include/NfcParam.h \
     include/NfcPeer.h \
     include/NfcSystem.h \
     include/NfcTag.h \
