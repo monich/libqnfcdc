@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Slava Monich <slava@monich.com>
+ * Copyright (C) 2019-2025 Slava Monich <slava@monich.com>
  * Copyright (C) 2019-2021 Jolla Ltd.
  *
  * You may use this file under the terms of the BSD license as follows:
@@ -45,12 +45,18 @@
 
 Q_STATIC_ASSERT(NfcSystem::Version_1_0_26 == NFC_DAEMON_VERSION(1,0,26));
 Q_STATIC_ASSERT(NfcSystem::Version_1_1_0 == NFC_DAEMON_VERSION(1,1,0));
+Q_STATIC_ASSERT(NfcSystem::Version_1_2_0 == NFC_DAEMON_VERSION(1,2,0));
+Q_STATIC_ASSERT(NfcSystem::Version_1_2_2 == NFC_DAEMON_VERSION(1,2,2));
 
 Q_STATIC_ASSERT((int)NfcSystem::None == (int)NFC_MODE_NONE);
 Q_STATIC_ASSERT((int)NfcSystem::P2PInitiator == (int)NFC_MODE_P2P_INITIATOR);
 Q_STATIC_ASSERT((int)NfcSystem::ReaderWriter == (int)NFC_MODE_READER_WRITER);
 Q_STATIC_ASSERT((int)NfcSystem::P2PTarget == (int)NFC_MODE_P2P_TARGET);
 Q_STATIC_ASSERT((int)NfcSystem::CardEmulation == (int)NFC_MODE_CARD_EMILATION);
+
+Q_STATIC_ASSERT((int)NfcSystem::NfcA == (int)NFC_TECH_A);
+Q_STATIC_ASSERT((int)NfcSystem::NfcB == (int)NFC_TECH_B);
+Q_STATIC_ASSERT((int)NfcSystem::NfcF == (int)NFC_TECH_F);
 
 // ==========================================================================
 // NfcSystem::Private
@@ -186,7 +192,7 @@ NfcSystem::techs() const
 #ifdef NFCDC_VERSION_1_1_0
     return iPrivate->iDaemon->techs;
 #else
-#pragma message("Please use libgnfcdc 1.1.0 or newer")
+    #pragma message("Please use libgnfcdc 1.1.0 or newer")
     return 0;
 #endif
 }

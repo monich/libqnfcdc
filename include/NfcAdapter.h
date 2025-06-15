@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Slava Monich <slava@monich.com>
+ * Copyright (C) 2019-2025 Slava Monich <slava@monich.com>
  * Copyright (C) 2019-2021 Jolla Ltd.
  *
  * You may use this file under the terms of the BSD license as follows:
@@ -49,7 +49,7 @@ class NfcAdapter :
     public QObject
 {
     Q_OBJECT
-    Q_DISABLE_COPY(NfcAdapter)
+    Q_PROPERTY(int interfaceVersion READ interfaceVersion NOTIFY validChanged)
     Q_PROPERTY(bool valid READ valid NOTIFY validChanged)
     Q_PROPERTY(bool present READ present NOTIFY presentChanged)
     Q_PROPERTY(bool enabled READ enabled NOTIFY enabledChanged)
@@ -61,6 +61,8 @@ class NfcAdapter :
     Q_PROPERTY(QString tagPath READ tagPath NOTIFY tagPathChanged)
     Q_PROPERTY(QString peerPath READ peerPath NOTIFY peerPathChanged)
     Q_PROPERTY(QString hostPath READ hostPath NOTIFY hostPathChanged)
+    Q_PROPERTY(QString laNfcid1 READ laNfcid1 NOTIFY laNfcid1Changed)
+    Q_PROPERTY(bool t4Ndef READ t4Ndef NOTIFY t4NdefChanged)
 
 public:
     NfcAdapter(QObject* aParent = Q_NULLPTR);
@@ -69,6 +71,7 @@ public:
     // Callback for qmlRegisterSingletonType<NfcAdapter>
     static QObject* createSingleton(QQmlEngine*, QJSEngine*);
 
+    int interfaceVersion() const;
     bool valid() const;
     bool present() const;
     bool enabled() const;
@@ -80,6 +83,8 @@ public:
     QString tagPath() const;
     QString peerPath() const;
     QString hostPath() const;
+    QString laNfcid1() const;
+    bool t4Ndef() const;
 
 Q_SIGNALS:
     void validChanged();
@@ -93,6 +98,8 @@ Q_SIGNALS:
     void tagPathChanged();
     void peerPathChanged();
     void hostPathChanged();
+    void t4NdefChanged();
+    void laNfcid1Changed();
 
 private:
     class Private;

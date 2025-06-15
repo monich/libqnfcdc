@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Slava Monich <slava@monich.com>
+ * Copyright (C) 2019-2025 Slava Monich <slava@monich.com>
  * Copyright (C) 2019-2021 Jolla Ltd.
  *
  * You may use this file under the terms of the BSD license as follows:
@@ -49,7 +49,6 @@ class NfcSystem :
     public QObject
 {
     Q_OBJECT
-    Q_DISABLE_COPY(NfcSystem)
     Q_PROPERTY(bool valid READ valid NOTIFY validChanged)
     Q_PROPERTY(bool present READ present NOTIFY presentChanged)
     Q_PROPERTY(bool enabled READ enabled NOTIFY enabledChanged)
@@ -64,7 +63,8 @@ public:
     enum DaemonVersion {
         Version_1_0_26 = 0x0100001a, // Fixed ISO-DEP initialization
         Version_1_1_0 = 0x01001000,  // NFC-DEP (peer-to-peer) support
-        Version_1_2_0 = 0x01002000   // Card Emulation support
+        Version_1_2_0 = 0x01002000,  // Card Emulation support
+        Version_1_2_2 = 0x01002002   // Adapter parameters API
     };
 
     enum Mode {

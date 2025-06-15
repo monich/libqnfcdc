@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Slava Monich <slava@monich.com>
+ * Copyright (C) 2024-2025 Slava Monich <slava@monich.com>
  *
  * You may use this file under the terms of the BSD license as follows:
  *
@@ -40,12 +40,8 @@
 
 #include "NfcTech.h"
 
-// This requires libgnfcdc 1.1.0
+// This requires libgnfcdc 1.1.0 or newer
 #ifdef NFCDC_VERSION_1_1_0
-
-Q_STATIC_ASSERT((int)NFC_TECH_A == (int)NfcSystem::NfcA);
-Q_STATIC_ASSERT((int)NFC_TECH_B == (int)NfcSystem::NfcB);
-Q_STATIC_ASSERT((int)NFC_TECH_F == (int)NfcSystem::NfcF);
 
 // ==========================================================================
 // NfcTech::Private

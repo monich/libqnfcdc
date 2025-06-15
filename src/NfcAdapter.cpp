@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Slava Monich <slava@monich.com>
+ * Copyright (C) 2019-2025 Slava Monich <slava@monich.com>
  * Copyright (C) 2019-2021 Jolla Ltd.
  *
  * You may use this file under the terms of the BSD license as follows:
@@ -58,7 +58,7 @@ public:
 
 public:
     NfcDefaultAdapter* iAdapter;
-    gulong iAdapterEventId[11];  // Must not be less than the number of non-NULLs:
+    gulong iAdapterEventId[13];  // Must not be less than the number of non-NULLs:
 };
 
 const char* NfcAdapter::Private::SIGNAL_NAME[] = {
@@ -76,6 +76,10 @@ const char* NfcAdapter::Private::SIGNAL_NAME[] = {
     "hostPathChanged",        // NFC_DEFAULT_ADAPTER_PROPERTY_HOSTS
     "supportedTechsChanged",  // NFC_DEFAULT_ADAPTER_PROPERTY_SUPPORTED_TECHS
 #endif
+#ifdef NFCDC_VERSION_1_2_0
+    "t4NdefChanged",          // NFC_DEFAULT_ADAPTER_PROPERTY_T4_NDEF
+    "laNfcid1Changed",        // NFC_DEFAULT_ADAPTER_PROPERTY_LA_NFCID1
+#endif
     // Remember to update iAdapterEventId count when adding new handlers!
 };
 
@@ -83,10 +87,8 @@ NfcAdapter::Private::Private(
     NfcAdapter* aParent) :
     iAdapter(nfc_default_adapter_new())
 {
-    Q_STATIC_ASSERT(G_N_ELEMENTS(SIGNAL_NAME) ==
-        NFC_DEFAULT_ADAPTER_PROPERTY_COUNT);
     uint k = 0;
-    for (int i = 0; i < NFC_DEFAULT_ADAPTER_PROPERTY_COUNT; i++) {
+    for (uint i = 0; i < G_N_ELEMENTS(SIGNAL_NAME); i++) {
         if (SIGNAL_NAME[i]) {
             iAdapterEventId[k++] =
                 nfc_default_adapter_add_property_handler(iAdapter,
@@ -127,8 +129,7 @@ NfcAdapter::NfcAdapter(
     QObject* aParent) :
     QObject(aParent),
     iPrivate(new Private(this))
-{
-}
+{}
 
 NfcAdapter::~NfcAdapter()
 {
@@ -143,6 +144,12 @@ NfcAdapter::createSingleton(
 {
     // Callback for qmlRegisterSingletonType<NfcAdapter>
     return new NfcAdapter;
+}
+
+int
+NfcAdapter::interfaceVersion() const
+{
+    return iPrivate->iAdapter->version;
 }
 
 bool
@@ -208,7 +215,7 @@ NfcAdapter::hostPath() const
     const char* host = iPrivate->iAdapter->hosts[0];
     return (host && host[0]) ? QString(host) : QString();
 #else
-#pragma message("Please use libgnfcdc 1.1.0 or newer")
+    #pragma message("Please use libgnfcdc 1.1.0 or newer")
     return QString();
 #endif
 }
@@ -219,7 +226,31 @@ NfcAdapter::supportedTechs() const
 #ifdef NFCDC_VERSION_1_1_0
     return iPrivate->iAdapter->supported_techs;
 #else
-#pragma message("Please use libgnfcdc 1.1.0 or newer")
+    #pragma message("Please use libgnfcdc 1.1.0 or newer")
     return 0;
+#endif
+}
+
+QString
+NfcAdapter::laNfcid1() const
+{
+#ifdef NFCDC_VERSION_1_2_0
+    const GUtilData* nfcid1 = iPrivate->iAdapter->la_nfcid1;
+    return nfcid1 ? QByteArray((char*)nfcid1->bytes, nfcid1->size).toHex() :
+        QString();
+#else
+    #pragma message("Please use libgnfcdc 1.2.0 or newer")
+    return QString();
+#endif
+}
+
+bool
+NfcAdapter::t4Ndef() const
+{
+#ifdef NFCDC_VERSION_1_2_0
+    return iPrivate->iAdapter->t4_ndef;
+#else
+    #pragma message("Please use libgnfcdc 1.2.0 or newer")
+    return true;
 #endif
 }
