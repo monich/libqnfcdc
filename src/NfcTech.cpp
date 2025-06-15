@@ -90,8 +90,14 @@ void
 NfcTech::Private::updateRequest()
 {
     if (needRequest()) {
+        // Create new request before disposing of the old one, so that
+        // RequestTechs D-Bus call gets issued before ReleaseTechs.
+        // Under certain circumstances, it could be more efficient on
+        // the nfcd side.
+        NfcTechRequest* req = nfc_tech_request_new(iDaemon, iAllowTechs,
+            iDisallowTechs);
         nfc_tech_request_free(iRequest);
-        iRequest = nfc_tech_request_new(iDaemon, iAllowTechs, iDisallowTechs);
+        iRequest = req;
     } else if (iRequest) {
         nfc_tech_request_free(iRequest);
         iRequest = Q_NULLPTR;

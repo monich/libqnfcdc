@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Slava Monich <slava@monich.com>
+ * Copyright (C) 2021-2025 Slava Monich <slava@monich.com>
  * Copyright (C) 2021 Jolla Ltd.
  *
  * You may use this file under the terms of the BSD license as follows:
@@ -90,9 +90,14 @@ void
 NfcMode::Private::updateRequest()
 {
     if (needRequest()) {
+        // Create new request before disposing of the old one, so that
+        // RequestMode D-Bus call gets issued before ReleaseMode.
+        // Under certain circumstances, it could be more efficient on
+        // the nfcd side.
+        NfcModeRequest* req = nfc_mode_request_new(iDaemon, (NFC_MODE)
+            iEnableModes, (NFC_MODE)iDisableModes);
         nfc_mode_request_free(iRequest);
-        iRequest = nfc_mode_request_new(iDaemon, (NFC_MODE)iEnableModes,
-            (NFC_MODE)iDisableModes);
+        iRequest = req;
     } else if (iRequest) {
         nfc_mode_request_free(iRequest);
         iRequest = Q_NULLPTR;
@@ -142,13 +147,9 @@ void
 NfcMode::setEnableModes(
     int aModes)
 {
-    if (iPrivate->iEnableModes != (NfcSystem::Mode)aModes) {
-        const bool didNeedRequest = iPrivate->needRequest();
-
-        iPrivate->iEnableModes = (NfcSystem::Mode)aModes;
-        if (didNeedRequest != iPrivate->needRequest()) {
-            iPrivate->updateRequest();
-        }
+    if (iPrivate->iEnableModes != (NfcSystem::Mode) aModes) {
+        iPrivate->iEnableModes = (NfcSystem::Mode) aModes;
+        iPrivate->updateRequest();
         Q_EMIT enableModesChanged();
     }
 }
@@ -163,13 +164,9 @@ void
 NfcMode::setDisableModes(
     int aModes)
 {
-    if (iPrivate->iDisableModes != (NfcSystem::Mode)aModes) {
-        const bool didNeedRequest = iPrivate->needRequest();
-
-        iPrivate->iDisableModes = (NfcSystem::Mode)aModes;
-        if (didNeedRequest != iPrivate->needRequest()) {
-            iPrivate->updateRequest();
-        }
+    if (iPrivate->iDisableModes != (NfcSystem::Mode) aModes) {
+        iPrivate->iDisableModes = (NfcSystem::Mode) aModes;
+        iPrivate->updateRequest();
         Q_EMIT disableModesChanged();
     }
 }

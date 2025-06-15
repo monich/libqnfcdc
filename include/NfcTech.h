@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Slava Monich <slava@monich.com>
+ * Copyright (C) 2024-2025 Slava Monich <slava@monich.com>
  *
  * You may use this file under the terms of the BSD license as follows:
  *
@@ -45,7 +45,6 @@ class NfcTech :
     public QObject
 {
     Q_OBJECT
-    Q_DISABLE_COPY(NfcTech)
     Q_PROPERTY(bool active READ active WRITE setActive NOTIFY activeChanged)
     Q_PROPERTY(int allowTechs READ allowTechs WRITE setAllowTechs NOTIFY allowTechsChanged)
     Q_PROPERTY(int disallowTechs READ disallowTechs WRITE setDisallowTechs NOTIFY disallowTechsChanged)
