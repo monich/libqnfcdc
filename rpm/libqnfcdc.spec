@@ -1,13 +1,13 @@
 Name:       libqnfcdc
 
 Summary:    Qt interface to nfcd
-Version:    1.0.0
+Version:    1.2.0
 Release:    1
 License:    BSD
 URL:        https://github.com/monich/libqnfcdc
 Source0:    %{name}-%{version}.tar.bz2
 
-%define libgnfcdc_version 1.0.6
+%define libgnfcdc_version 1.2.0
 
 Requires:       libgnfcdc >= %{libgnfcdc_version}
 BuildRequires:  pkgconfig
@@ -19,6 +19,10 @@ Requires(postun): /sbin/ldconfig
 
 %{!?qtc_qmake5:%define qtc_qmake5 %qmake5}
 %{!?qtc_make:%define qtc_make make}
+
+# license macro requires rpm >= 4.11
+BuildRequires: pkgconfig(rpm)
+%define license_support %(pkg-config --exists 'rpm >= 4.11'; echo $?)
 
 %description
 Qt interface to nfcd
@@ -39,7 +43,6 @@ This package contains the development header files for %{name}
 %qtc_make %{?_smp_mflags}
 
 %install
-rm -rf %{buildroot}
 %qmake5_install
 
 %post -p /sbin/ldconfig
@@ -48,8 +51,10 @@ rm -rf %{buildroot}
 
 %files
 %defattr(-,root,root,-)
-%license LICENSE
 %{_libdir}/%{name}.so.*
+%if %{license_support} == 0
+%license LICENSE
+%endif
 
 %files devel
 %defattr(-,root,root,-)
