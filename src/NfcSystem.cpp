@@ -47,6 +47,7 @@ Q_STATIC_ASSERT(NfcSystem::Version_1_0_26 == NFC_DAEMON_VERSION(1,0,26));
 Q_STATIC_ASSERT(NfcSystem::Version_1_1_0 == NFC_DAEMON_VERSION(1,1,0));
 Q_STATIC_ASSERT(NfcSystem::Version_1_2_0 == NFC_DAEMON_VERSION(1,2,0));
 Q_STATIC_ASSERT(NfcSystem::Version_1_2_2 == NFC_DAEMON_VERSION(1,2,2));
+Q_STATIC_ASSERT(NfcSystem::Version_1_2_3 == NFC_DAEMON_VERSION(1,2,3));
 
 Q_STATIC_ASSERT((int)NfcSystem::None == (int)NFC_MODE_NONE);
 Q_STATIC_ASSERT((int)NfcSystem::P2PInitiator == (int)NFC_MODE_P2P_INITIATOR);

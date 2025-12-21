@@ -64,7 +64,8 @@ public:
         Version_1_0_26 = 0x0100001a, // Fixed ISO-DEP initialization
         Version_1_1_0 = 0x01001000,  // NFC-DEP (peer-to-peer) support
         Version_1_2_0 = 0x01002000,  // Card Emulation support
-        Version_1_2_2 = 0x01002002   // Adapter parameters API
+        Version_1_2_2 = 0x01002002,  // Adapter parameters API
+        Version_1_2_3 = 0x01002003   // Transceive support
     };
 
     enum Mode {
