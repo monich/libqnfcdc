@@ -40,7 +40,7 @@
 #ifndef QNFCDC_SYSTEM_H
 #define QNFCDC_SYSTEM_H
 
-#include <QObject>
+#include <QtCore/QObject>
 
 class QQmlEngine;
 class QJSEngine;
@@ -65,7 +65,8 @@ public:
         Version_1_1_0 = 0x01001000,  // NFC-DEP (peer-to-peer) support
         Version_1_2_0 = 0x01002000,  // Card Emulation support
         Version_1_2_2 = 0x01002002,  // Adapter parameters API
-        Version_1_2_3 = 0x01002003   // Transceive support
+        Version_1_2_3 = 0x01002003,  // Transceive support
+        Version_1_2_4 = 0x01002004   // LI_A_HB parameter (Since 1.2.1)
     };
 
     enum Mode {

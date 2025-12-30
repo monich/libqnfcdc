@@ -58,7 +58,7 @@ public:
 
 public:
     NfcDefaultAdapter* iAdapter;
-    gulong iAdapterEventId[13];  // Must not be less than the number of non-NULLs:
+    gulong iAdapterEventId[14];  // Must not be less than the number of non-NULLs:
 };
 
 const char* NfcAdapter::Private::SIGNAL_NAME[] = {
@@ -79,6 +79,9 @@ const char* NfcAdapter::Private::SIGNAL_NAME[] = {
 #ifdef NFCDC_VERSION_1_2_0
     "t4NdefChanged",          // NFC_DEFAULT_ADAPTER_PROPERTY_T4_NDEF
     "laNfcid1Changed",        // NFC_DEFAULT_ADAPTER_PROPERTY_LA_NFCID1
+#endif
+#ifdef NFCDC_VERSION_1_2_2
+    "liAHbChanged",           // NFC_DEFAULT_ADAPTER_PROPERTY_LI_A_HB
 #endif
     // Remember to update iAdapterEventId count when adding new handlers!
 };
@@ -231,6 +234,17 @@ NfcAdapter::supportedTechs() const
 #endif
 }
 
+bool
+NfcAdapter::t4Ndef() const
+{
+#ifdef NFCDC_VERSION_1_2_0
+    return iPrivate->iAdapter->t4_ndef;
+#else
+    #pragma message("Please use libgnfcdc 1.2.0 or newer")
+    return true;
+#endif
+}
+
 QString
 NfcAdapter::laNfcid1() const
 {
@@ -244,13 +258,14 @@ NfcAdapter::laNfcid1() const
 #endif
 }
 
-bool
-NfcAdapter::t4Ndef() const
+QString
+NfcAdapter::liAHb() const
 {
-#ifdef NFCDC_VERSION_1_2_0
-    return iPrivate->iAdapter->t4_ndef;
+#ifdef NFCDC_VERSION_1_2_2
+    const GUtilData* hb = iPrivate->iAdapter->li_a_hb;
+    return hb ? QByteArray((char*)hb->bytes, hb->size).toHex() : QString();
 #else
-    #pragma message("Please use libgnfcdc 1.2.0 or newer")
-    return true;
+    #pragma message("Please use libgnfcdc 1.2.2 or newer")
+    return QString();
 #endif
 }

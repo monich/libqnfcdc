@@ -39,7 +39,7 @@
 #ifndef QNFCDC_PARAM_H
 #define QNFCDC_PARAM_H
 
-#include <QObject>
+#include <QtCore/QObject>
 
 class NfcParam :
     public QObject
@@ -49,6 +49,7 @@ class NfcParam :
     Q_PROPERTY(bool reset READ reset WRITE setReset NOTIFY resetChanged)
     Q_PROPERTY(bool t4Ndef READ t4Ndef WRITE setT4Ndef NOTIFY t4NdefChanged)
     Q_PROPERTY(QString laNfcid1 READ laNfcid1 WRITE setLaNfcid1 NOTIFY laNfcid1Changed)
+    Q_PROPERTY(QString liAHb READ liAHb WRITE setLiAHb NOTIFY liAHbChanged)  // Since 1.2.1
 
 public:
     NfcParam(QObject* aParent = Q_NULLPTR);
@@ -66,11 +67,15 @@ public:
     QString laNfcid1() const;
     void setLaNfcid1(QString);
 
+    QString liAHb() const;   // Since 1.2.1
+    void setLiAHb(QString);  // Since 1.2.1
+
 Q_SIGNALS:
     void activeChanged();
     void resetChanged();
     void t4NdefChanged();
     void laNfcid1Changed();
+    void liAHbChanged();  // Since 1.2.1
 
 private:
     class Private;

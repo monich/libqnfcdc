@@ -61,7 +61,9 @@ public:
     NfcDefaultAdapterParamReq* iRequest;
     NfcAdapterParam* iT4Ndef;
     NfcAdapterParam* iLaNfcid1;
-    QByteArray iLaNfcid1Bytes;
+    NfcAdapterParam* iLiAHb;
+    QByteArray iLaNfcid1Data;
+    QByteArray iLiAHbData;
     bool iReset;
     bool iActive;
 };
@@ -96,10 +98,11 @@ NfcParam::Private::updateRequest()
 {
     if (needRequest()) {
         int i = 0;
-        NfcAdapterParamPtrC params[3];
+        NfcAdapterParamPtrC params[4];
 
         if (iT4Ndef) params[i++] = iT4Ndef;
         if (iLaNfcid1) params[i++] = iLaNfcid1;
+        if (iLiAHb) params[i++] = iLiAHb;
         params[i] = Q_NULLPTR;
         nfc_default_adapter_param_req_free(iRequest);
         iRequest = nfc_default_adapter_param_req_new(iAdapter, iReset, params);
@@ -194,23 +197,59 @@ NfcParam::laNfcid1() const
 
 void
 NfcParam::setLaNfcid1(
-    QString aNfcid1)
+    QString aHex)
 {
-    const QByteArray bytes(QByteArray::fromHex(aNfcid1.toLatin1()));
+    const QByteArray bytes(QByteArray::fromHex(aHex.toLatin1()));
 
-    if (!iPrivate->iLaNfcid1 || bytes != iPrivate->iLaNfcid1Bytes) {
+    if (!iPrivate->iLaNfcid1 || bytes != iPrivate->iLaNfcid1Data) {
         if (!iPrivate->iLaNfcid1) {
             iPrivate->iLaNfcid1 = new NfcAdapterParam;
             memset(iPrivate->iLaNfcid1, 0, sizeof(NfcAdapterParam));
             iPrivate->iLaNfcid1->key = NFC_ADAPTER_PARAM_KEY_LA_NFCID1;
         }
-        iPrivate->iLaNfcid1Bytes = bytes;
+        iPrivate->iLaNfcid1Data = bytes;
         iPrivate->iLaNfcid1->value.data.size = bytes.size();
         iPrivate->iLaNfcid1->value.data.bytes = (uchar*)
-            iPrivate->iLaNfcid1Bytes.constData();
+            iPrivate->iLaNfcid1Data.constData();
         iPrivate->updateRequest();
         Q_EMIT laNfcid1Changed();
     }
+}
+
+QString
+NfcParam::liAHb() const
+{
+    if (iPrivate->iLiAHb) {
+        const GUtilData* hb = &iPrivate->iLiAHb->value.data;
+        return QByteArray((char*)hb->bytes, hb->size).toHex();
+    } else {
+        return QString();
+    }
+}
+
+void
+NfcParam::setLiAHb(
+    QString aHex)
+{
+#ifdef NFCDC_VERSION_1_2_2
+    const QByteArray bytes(QByteArray::fromHex(aHex.toLatin1()));
+
+    if (!iPrivate->iLiAHb || bytes != iPrivate->iLiAHbData) {
+        if (!iPrivate->iLiAHb) {
+            iPrivate->iLiAHb = new NfcAdapterParam;
+            memset(iPrivate->iLiAHb, 0, sizeof(NfcAdapterParam));
+            iPrivate->iLiAHb->key = NFC_ADAPTER_PARAM_KEY_LI_A_HB;
+        }
+        iPrivate->iLiAHbData = bytes;
+        iPrivate->iLiAHb->value.data.size = bytes.size();
+        iPrivate->iLiAHb->value.data.bytes = (uchar*)
+            iPrivate->iLiAHbData.constData();
+        iPrivate->updateRequest();
+        Q_EMIT liAHbChanged();
+    }
+#else // NFCDC_VERSION_1_2_2
+#pragma message("Please use libgnfcdc 1.2.2 or newer")
+#endif
 }
 
 #else // NFCDC_VERSION_1_2_0

@@ -40,7 +40,7 @@
 #ifndef QNFCDC_ADAPTER_H
 #define QNFCDC_ADAPTER_H
 
-#include <QObject>
+#include <QtCore/QObject>
 
 class QQmlEngine;
 class QJSEngine;
@@ -62,6 +62,7 @@ class NfcAdapter :
     Q_PROPERTY(QString peerPath READ peerPath NOTIFY peerPathChanged)
     Q_PROPERTY(QString hostPath READ hostPath NOTIFY hostPathChanged)
     Q_PROPERTY(QString laNfcid1 READ laNfcid1 NOTIFY laNfcid1Changed)
+    Q_PROPERTY(QString liAHb READ liAHb NOTIFY liAHbChanged) // Since 1.2.1
     Q_PROPERTY(bool t4Ndef READ t4Ndef NOTIFY t4NdefChanged)
 
 public:
@@ -84,6 +85,7 @@ public:
     QString peerPath() const;
     QString hostPath() const;
     QString laNfcid1() const;
+    QString liAHb() const;  // Since 1.2.1
     bool t4Ndef() const;
 
 Q_SIGNALS:
@@ -100,6 +102,7 @@ Q_SIGNALS:
     void hostPathChanged();
     void t4NdefChanged();
     void laNfcid1Changed();
+    void liAHbChanged();  // Since 1.2.1
 
 private:
     class Private;
