@@ -1,13 +1,13 @@
 Name:       libqnfcdc
 
 Summary:    Qt interface to nfcd
-Version:    1.2.0
+Version:    1.2.1
 Release:    1
 License:    BSD
 URL:        https://github.com/monich/libqnfcdc
 Source0:    %{name}-%{version}.tar.bz2
 
-%define libgnfcdc_version 1.2.0
+%define libgnfcdc_version 1.2.2
 
 Requires:       libgnfcdc >= %{libgnfcdc_version}
 BuildRequires:  pkgconfig
